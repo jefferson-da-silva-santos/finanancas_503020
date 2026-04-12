@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import './App.css';
+import 'boxicons/css/boxicons.min.css'; 
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -533,7 +534,6 @@ function PercentEditor({ config, year, month, onSaved, toast }) {
     p: config?.pct_personal  ?? 30,
     s: config?.pct_savings   ?? 20,
   });
-  const [income, setIncome] = useState(config?.income ?? 0);
   const [saving, setSaving] = useState(false);
 
   const total = parseFloat(pcts.e) + parseFloat(pcts.p) + parseFloat(pcts.s);
@@ -544,7 +544,6 @@ function PercentEditor({ config, year, month, onSaved, toast }) {
     setSaving(true);
     try {
       await api.updateMonth(year, month, {
-        income: parseFloat(income),
         pct_essential: parseFloat(pcts.e),
         pct_personal:  parseFloat(pcts.p),
         pct_savings:   parseFloat(pcts.s),
@@ -560,16 +559,6 @@ function PercentEditor({ config, year, month, onSaved, toast }) {
 
   return (
     <div className="pct-editor">
-      <div className="pct-editor__income">
-        <label>Renda Mensal (R$)</label>
-        <input
-          type="number"
-          min="0"
-          step="100"
-          value={income}
-          onChange={e => setIncome(e.target.value)}
-        />
-      </div>
       <div className="pct-editor__table">
         <div className="pct-row">
           <span className="pct-row__dot" style={{ background: '#16a34a' }} />
@@ -692,13 +681,14 @@ function TransactionTable({ transactions, onTogglePaid, onEdit, onDelete, toast 
               return (
                 <tr key={tx.id} className={`tx-row ${tx.paid ? 'tx-row--paid' : ''} ${overdue ? 'tx-row--overdue' : ''}`}>
                   <td>
-                    <button
-                      className={`paid-toggle ${tx.paid ? 'paid-toggle--on' : ''}`}
-                      onClick={() => onTogglePaid(tx.id)}
-                      title={tx.paid ? 'Marcar como pendente' : 'Marcar como pago'}
-                    >
-                      <i className={`bx ${tx.paid ? 'bx-check-circle' : 'bx-circle'}`} />
-                    </button>
+                    <label className="table-checkbox" title={tx.paid ? 'Marcar como pendente' : 'Marcar como pago'}>
+                      <input
+                        type="checkbox"
+                        checked={!!tx.paid}
+                        onChange={() => onTogglePaid(tx.id)}
+                      />
+                      <span className="table-checkbox__box" />
+                    </label>
                   </td>
                   <td className="tx-desc">
                     <span>{tx.description}</span>
@@ -954,13 +944,14 @@ function IncomeTable({ incomes, onToggleReceived, onEdit, onDelete, toast }) {
             {incomes.map(entry => (
               <tr key={entry.id} className={`tx-row ${entry.received ? 'tx-row--paid' : ''}`}>
                 <td>
-                  <button
-                    className={`paid-toggle ${entry.received ? 'paid-toggle--on' : ''}`}
-                    onClick={() => onToggleReceived(entry.id)}
-                    title={entry.received ? 'Marcar como pendente' : 'Marcar como recebido'}
-                  >
-                    <i className={`bx ${entry.received ? 'bx-check-circle' : 'bx-circle'}`} />
-                  </button>
+                  <label className="table-checkbox" title={entry.received ? 'Marcar como pendente' : 'Marcar como recebido'}>
+                    <input
+                      type="checkbox"
+                      checked={!!entry.received}
+                      onChange={() => onToggleReceived(entry.id)}
+                    />
+                    <span className="table-checkbox__box" />
+                  </label>
                 </td>
                 <td className="tx-desc">
                   <span>{entry.description}</span>
@@ -1248,7 +1239,7 @@ function MonthView({ year, month, darkMode, toast }) {
           <h3 className="card__title">
             <i className="bx bx-slider" /> Configurar Mês
           </h3>
-          <p className="card__subtitle">Defina a renda mensal e os percentuais da regra 50/30/20.</p>
+          <p className="card__subtitle">Defina os percentuais da regra 50/30/20 para distribuição dos gastos.</p>
           <PercentEditor
             config={config}
             year={year}

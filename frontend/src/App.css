@@ -674,14 +674,6 @@ img { display: block; max-width: 100%; }
   gap: 18px;
 }
 
-.pct-editor__income label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
 .pct-editor__table {
   display: flex;
   flex-direction: column;
@@ -804,7 +796,8 @@ img { display: block; max-width: 100%; }
   white-space: nowrap;
 }
 
-.tx-amount--paid { color: var(--green-500); }
+.tx-amount--paid     { color: var(--green-500); }
+.tx-amount--received { color: var(--green-500); }
 .tx-method { color: var(--text-muted); }
 
 .tx-actions { display: flex; gap: 4px; }
@@ -822,7 +815,72 @@ img { display: block; max-width: 100%; }
 .tx-empty p { font-size: 14px; }
 
 /* ─────────────────────────────────────────────
-   PAID TOGGLE
+   TABLE CHECKBOX — usado nas tabelas de gastos e entradas
+───────────────────────────────────────────── */
+.table-checkbox {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+/* esconde o input nativo */
+.table-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* caixa customizada */
+.table-checkbox__box {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+/* check mark via pseudo-elemento */
+.table-checkbox__box::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid transparent;
+  border-left: none;
+  border-top: none;
+  transform: rotate(45deg) translateY(-1px);
+  transition: border-color 0.12s;
+}
+
+/* hover */
+.table-checkbox:hover .table-checkbox__box {
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+/* checked */
+.table-checkbox input:checked + .table-checkbox__box {
+  background: var(--green-500);
+  border-color: var(--green-500);
+}
+
+.table-checkbox input:checked + .table-checkbox__box::after {
+  border-color: #fff;
+}
+
+/* linha paga: o checkbox fica semi-opaco junto com o restante da linha
+   (o .tx-row--paid já aplica opacity: 0.55 em todos os td) */
+
+/* ─────────────────────────────────────────────
+   PAID TOGGLE — mantido para o UpcomingPanel
 ───────────────────────────────────────────── */
 .paid-toggle {
   background: none;
@@ -1295,8 +1353,6 @@ select { cursor: pointer; }
 .income-total--received i  { background: rgba(22,163,74,.12);  color: var(--green-500); }
 .income-total--pending i   { background: rgba(245,158,11,.12); color: var(--amber-500); }
 .income-total--total i     { background: rgba(99,102,241,.12); color: #6366f1; }
-
-.tx-amount--received { color: var(--green-500); }
 
 /* ─────────────────────────────────────────────
    INCOME BUTTON VARIANT
