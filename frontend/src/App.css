@@ -1241,3 +1241,79 @@ select { cursor: pointer; }
   .month-btn__num { font-size: 12px; }
   .summary-cards { grid-template-columns: 1fr 1fr; }
 }
+
+/* ─────────────────────────────────────────────
+   INCOME TABLE
+───────────────────────────────────────────── */
+.income-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.income-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.income-total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.income-total i {
+  font-size: 22px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.income-total div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.income-total span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.income-total strong {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: var(--text-primary);
+}
+
+.income-total--received i  { background: rgba(22,163,74,.12);  color: var(--green-500); }
+.income-total--pending i   { background: rgba(245,158,11,.12); color: var(--amber-500); }
+.income-total--total i     { background: rgba(99,102,241,.12); color: #6366f1; }
+
+.tx-amount--received { color: var(--green-500); }
+
+/* ─────────────────────────────────────────────
+   INCOME BUTTON VARIANT
+───────────────────────────────────────────── */
+.btn--income {
+  background: var(--green-600);
+  color: #fff;
+  border: none;
+}
+
+.btn--income:hover { background: var(--green-700); }
+
+/* ─────────────────────────────────────────────
+   SUMMARY CARD SUB-LABEL
+───────────────────────────────────────────── */
+.summary-card__sub {
+  font-size: 10px !important;
+  color: var(--green-500) !important;
+  font-weight: 600 !important;
+}

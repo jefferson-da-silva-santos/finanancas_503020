@@ -50,8 +50,18 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS incomes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    month_id INTEGER NOT NULL REFERENCES months(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    amount REAL NOT NULL,
+    received INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE INDEX IF NOT EXISTS idx_transactions_month ON transactions(month_id);
   CREATE INDEX IF NOT EXISTS idx_transactions_group ON transactions(installment_group_id);
+  CREATE INDEX IF NOT EXISTS idx_incomes_month ON incomes(month_id);
 `);
 
 // ─────────────────────────────────────────────
@@ -70,12 +80,17 @@ function getOrCreateMonth(year, month) {
 }
 
 function computeSummary(monthId, monthRow) {
-  const txs = db.prepare('SELECT * FROM transactions WHERE month_id=?').all(monthId);
+  const txs     = db.prepare('SELECT * FROM transactions WHERE month_id=?').all(monthId);
+  const incomes = db.prepare('SELECT * FROM incomes WHERE month_id=? ORDER BY created_at ASC').all(monthId);
+
+  // Entradas efetivamente recebidas somam à renda base
+  const totalIncomeReceived = incomes.reduce((acc, e) => acc + (e.received ? e.amount : 0), 0);
+  const baseIncome = monthRow.income + totalIncomeReceived;
 
   const planned = {
-    essential: (monthRow.income * monthRow.pct_essential) / 100,
-    personal:  (monthRow.income * monthRow.pct_personal)  / 100,
-    savings:   (monthRow.income * monthRow.pct_savings)   / 100,
+    essential: (baseIncome * monthRow.pct_essential) / 100,
+    personal:  (baseIncome * monthRow.pct_personal)  / 100,
+    savings:   (baseIncome * monthRow.pct_savings)   / 100,
   };
 
   const realized = { essential: 0, personal: 0, savings: 0 };
@@ -91,7 +106,7 @@ function computeSummary(monthId, monthRow) {
 
   const totalRealized = realized.essential + realized.personal + realized.savings;
 
-  return { planned, realized, pending, totalRealized, transactions: txs };
+  return { planned, realized, pending, totalRealized, transactions: txs, incomes, totalIncomeReceived, baseIncome };
 }
 
 function validatePercents(e, p, s) {
@@ -383,6 +398,98 @@ app.get('/api/year/:year', (req, res) => {
       }
     }
     ok(res, months);
+  } catch (e) {
+    fail(res, e.message, 500);
+  }
+});
+
+// ─────────────────────────────────────────────
+// ROUTES: INCOMES (Entradas)
+// ─────────────────────────────────────────────
+
+// GET /api/months/:year/:month/incomes
+app.get('/api/months/:year/:month/incomes', (req, res) => {
+  try {
+    const year  = parseInt(req.params.year);
+    const month = parseInt(req.params.month);
+    const row = getOrCreateMonth(year, month);
+    const incomes = db.prepare(
+      'SELECT * FROM incomes WHERE month_id=? ORDER BY created_at ASC'
+    ).all(row.id);
+    ok(res, incomes);
+  } catch (e) {
+    fail(res, e.message, 500);
+  }
+});
+
+// POST /api/incomes — create income entry
+app.post('/api/incomes', (req, res) => {
+  try {
+    const { year, month, description, amount, received } = req.body;
+    if (!description || !description.trim()) return fail(res, 'Descrição obrigatória');
+    if (!amount || amount <= 0)              return fail(res, 'Valor deve ser positivo');
+    if (!year || !month)                     return fail(res, 'Ano e mês obrigatórios');
+
+    const mRow = getOrCreateMonth(year, month);
+    const info = db.prepare(
+      'INSERT INTO incomes (month_id, description, amount, received) VALUES (?, ?, ?, ?)'
+    ).run(mRow.id, description.trim(), parseFloat(amount), received ? 1 : 0);
+
+    const income = db.prepare('SELECT * FROM incomes WHERE id=?').get(info.lastInsertRowid);
+    ok(res, income);
+  } catch (e) {
+    fail(res, e.message, 500);
+  }
+});
+
+// PUT /api/incomes/:id — update income entry
+app.put('/api/incomes/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const entry = db.prepare('SELECT * FROM incomes WHERE id=?').get(id);
+    if (!entry) return fail(res, 'Entrada não encontrada', 404);
+
+    const { description, amount, received } = req.body;
+    const fields = [];
+    const values = [];
+
+    if (description !== undefined) { fields.push('description=?'); values.push(description.trim()); }
+    if (amount !== undefined)      { fields.push('amount=?');      values.push(parseFloat(amount)); }
+    if (received !== undefined)    { fields.push('received=?');    values.push(received ? 1 : 0); }
+
+    if (fields.length === 0) return fail(res, 'Nenhum campo para atualizar');
+    values.push(id);
+    db.prepare(`UPDATE incomes SET ${fields.join(',')} WHERE id=?`).run(...values);
+
+    const updated = db.prepare('SELECT * FROM incomes WHERE id=?').get(id);
+    ok(res, updated);
+  } catch (e) {
+    fail(res, e.message, 500);
+  }
+});
+
+// DELETE /api/incomes/:id
+app.delete('/api/incomes/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const entry = db.prepare('SELECT * FROM incomes WHERE id=?').get(id);
+    if (!entry) return fail(res, 'Entrada não encontrada', 404);
+    db.prepare('DELETE FROM incomes WHERE id=?').run(id);
+    ok(res, { deleted: id });
+  } catch (e) {
+    fail(res, e.message, 500);
+  }
+});
+
+// PATCH /api/incomes/:id/toggle-received
+app.patch('/api/incomes/:id/toggle-received', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const entry = db.prepare('SELECT * FROM incomes WHERE id=?').get(id);
+    if (!entry) return fail(res, 'Entrada não encontrada', 404);
+    const newVal = entry.received ? 0 : 1;
+    db.prepare('UPDATE incomes SET received=? WHERE id=?').run(newVal, id);
+    ok(res, { id, received: newVal });
   } catch (e) {
     fail(res, e.message, 500);
   }

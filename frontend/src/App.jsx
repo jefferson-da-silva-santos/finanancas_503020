@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -59,15 +59,21 @@ async function apiFetch(path, options = {}) {
 }
 
 const api = {
-  getMonth:        (y, m)       => apiFetch(`/months/${y}/${m}`),
-  updateMonth:     (y, m, body) => apiFetch(`/months/${y}/${m}`, { method: 'PUT', body }),
-  getTransactions: (y, m)       => apiFetch(`/months/${y}/${m}/transactions`),
-  createTransaction: (body)     => apiFetch('/transactions', { method: 'POST', body }),
-  updateTransaction: (id, body) => apiFetch(`/transactions/${id}`, { method: 'PUT', body }),
-  deleteTransaction: (id)       => apiFetch(`/transactions/${id}`, { method: 'DELETE' }),
-  deleteGroup:       (gid)      => apiFetch(`/transactions/group/${gid}`, { method: 'DELETE' }),
-  togglePaid:        (id)       => apiFetch(`/transactions/${id}/toggle-paid`, { method: 'PATCH' }),
-  getUpcoming:       ()         => apiFetch('/upcoming'),
+  getMonth:           (y, m)       => apiFetch(`/months/${y}/${m}`),
+  updateMonth:        (y, m, body) => apiFetch(`/months/${y}/${m}`, { method: 'PUT', body }),
+  getTransactions:    (y, m)       => apiFetch(`/months/${y}/${m}/transactions`),
+  createTransaction:  (body)       => apiFetch('/transactions', { method: 'POST', body }),
+  updateTransaction:  (id, body)   => apiFetch(`/transactions/${id}`, { method: 'PUT', body }),
+  deleteTransaction:  (id)         => apiFetch(`/transactions/${id}`, { method: 'DELETE' }),
+  deleteGroup:        (gid)        => apiFetch(`/transactions/group/${gid}`, { method: 'DELETE' }),
+  togglePaid:         (id)         => apiFetch(`/transactions/${id}/toggle-paid`, { method: 'PATCH' }),
+  getUpcoming:        ()           => apiFetch('/upcoming'),
+  // Entradas
+  getIncomes:         (y, m)       => apiFetch(`/months/${y}/${m}/incomes`),
+  createIncome:       (body)       => apiFetch('/incomes', { method: 'POST', body }),
+  updateIncome:       (id, body)   => apiFetch(`/incomes/${id}`, { method: 'PUT', body }),
+  deleteIncome:       (id)         => apiFetch(`/incomes/${id}`, { method: 'DELETE' }),
+  toggleReceived:     (id)         => apiFetch(`/incomes/${id}/toggle-received`, { method: 'PATCH' }),
 };
 
 // ─────────────────────────────────────────────
@@ -737,6 +743,249 @@ function TransactionTable({ transactions, onTogglePaid, onEdit, onDelete, toast 
 }
 
 // ─────────────────────────────────────────────
+// COMPONENTS: IncomeForm
+// ─────────────────────────────────────────────
+
+function IncomeForm({ year, month, onSave, onClose, toast }) {
+  const [form, setForm] = useState({ description: '', amount: '', received: false });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleSubmit() {
+    if (!form.description.trim()) return toast('Descrição obrigatória', 'error');
+    if (!form.amount || parseFloat(form.amount) <= 0) return toast('Valor inválido', 'error');
+    setSaving(true);
+    try {
+      await api.createIncome({
+        year, month,
+        description: form.description.trim(),
+        amount: parseFloat(form.amount),
+        received: form.received,
+      });
+      toast('Entrada registrada!');
+      onSave();
+      onClose();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="form-grid">
+      <div className="form-field form-field--full">
+        <label>Descrição</label>
+        <input
+          type="text"
+          value={form.description}
+          onChange={e => set('description', e.target.value)}
+          placeholder="Ex: Salário, Freelance, Aluguel recebido..."
+          autoFocus
+        />
+      </div>
+      <div className="form-field form-field--full">
+        <label>Valor (R$)</label>
+        <input
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={form.amount}
+          onChange={e => set('amount', e.target.value)}
+          placeholder="0,00"
+        />
+      </div>
+      <div className="form-field form-field--full">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={form.received}
+            onChange={e => set('received', e.target.checked)}
+          />
+          <span>Marcar como recebido</span>
+        </label>
+      </div>
+      <div className="form-actions">
+        <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn--primary" onClick={handleSubmit} disabled={saving}>
+          {saving ? <i className="bx bx-loader-alt bx-spin" /> : <i className="bx bx-plus" />}
+          {saving ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// COMPONENTS: EditIncomeModal
+// ─────────────────────────────────────────────
+
+function EditIncomeModal({ entry, onSave, onClose, toast }) {
+  const [form, setForm] = useState({
+    description: entry.description,
+    amount: entry.amount,
+    received: entry.received === 1,
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleSave() {
+    if (!form.description.trim()) return toast('Descrição obrigatória', 'error');
+    if (!form.amount || parseFloat(form.amount) <= 0) return toast('Valor inválido', 'error');
+    setSaving(true);
+    try {
+      await api.updateIncome(entry.id, {
+        description: form.description.trim(),
+        amount: parseFloat(form.amount),
+        received: form.received,
+      });
+      toast('Entrada atualizada!');
+      onSave();
+      onClose();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="form-grid">
+      <div className="form-field form-field--full">
+        <label>Descrição</label>
+        <input
+          type="text"
+          value={form.description}
+          onChange={e => set('description', e.target.value)}
+          autoFocus
+        />
+      </div>
+      <div className="form-field form-field--full">
+        <label>Valor (R$)</label>
+        <input
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={form.amount}
+          onChange={e => set('amount', e.target.value)}
+        />
+      </div>
+      <div className="form-field form-field--full">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={form.received}
+            onChange={e => set('received', e.target.checked)}
+          />
+          <span>Recebido</span>
+        </label>
+      </div>
+      <div className="form-actions">
+        <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn--primary" onClick={handleSave} disabled={saving}>
+          {saving ? <i className="bx bx-loader-alt bx-spin" /> : null} Salvar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// COMPONENTS: IncomeTable
+// ─────────────────────────────────────────────
+
+function IncomeTable({ incomes, onToggleReceived, onEdit, onDelete, toast }) {
+  const totalReceived = incomes.reduce((acc, e) => acc + (e.received ? e.amount : 0), 0);
+  const totalPending  = incomes.reduce((acc, e) => acc + (!e.received ? e.amount : 0), 0);
+
+  async function handleDelete(id) {
+    try {
+      await api.deleteIncome(id);
+      toast('Entrada removida!');
+      onDelete();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  return (
+    <div className="income-table-wrapper">
+      {/* Totalizadores */}
+      <div className="income-totals">
+        <div className="income-total income-total--received">
+          <i className="bx bx-check-circle" />
+          <div>
+            <span>Recebido</span>
+            <strong>{fmt(totalReceived)}</strong>
+          </div>
+        </div>
+        <div className="income-total income-total--pending">
+          <i className="bx bx-time" />
+          <div>
+            <span>A Receber</span>
+            <strong>{fmt(totalPending)}</strong>
+          </div>
+        </div>
+        <div className="income-total income-total--total">
+          <i className="bx bx-wallet" />
+          <div>
+            <span>Total Previsto</span>
+            <strong>{fmt(totalReceived + totalPending)}</strong>
+          </div>
+        </div>
+      </div>
+
+      {incomes.length === 0 ? (
+        <div className="tx-empty">
+          <i className="bx bx-dollar-circle" />
+          <p>Nenhuma entrada registrada neste mês</p>
+        </div>
+      ) : (
+        <table className="tx-table">
+          <thead>
+            <tr>
+              <th>Recebido</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {incomes.map(entry => (
+              <tr key={entry.id} className={`tx-row ${entry.received ? 'tx-row--paid' : ''}`}>
+                <td>
+                  <button
+                    className={`paid-toggle ${entry.received ? 'paid-toggle--on' : ''}`}
+                    onClick={() => onToggleReceived(entry.id)}
+                    title={entry.received ? 'Marcar como pendente' : 'Marcar como recebido'}
+                  >
+                    <i className={`bx ${entry.received ? 'bx-check-circle' : 'bx-circle'}`} />
+                  </button>
+                </td>
+                <td className="tx-desc">
+                  <span>{entry.description}</span>
+                </td>
+                <td className={`tx-amount ${entry.received ? 'tx-amount--received' : ''}`}>
+                  {fmt(entry.amount)}
+                </td>
+                <td className="tx-actions">
+                  <button className="icon-btn" onClick={() => onEdit(entry)} title="Editar">
+                    <i className="bx bx-edit" />
+                  </button>
+                  <button className="icon-btn icon-btn--danger" onClick={() => handleDelete(entry.id)} title="Excluir">
+                    <i className="bx bx-trash" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // COMPONENTS: UpcomingPanel
 // ─────────────────────────────────────────────
 
@@ -748,9 +997,7 @@ function UpcomingPanel({ onTogglePaid }) {
     try {
       const data = await api.getUpcoming();
       setItems(data);
-    } catch (err) {
-      console.error('Erro ao carregar contas a vencer:', err);
-    }
+    } catch {}
     finally { setLoading(false); }
   }, []);
 
@@ -812,10 +1059,12 @@ function UpcomingPanel({ onTogglePaid }) {
 // ─────────────────────────────────────────────
 
 function MonthView({ year, month, darkMode, toast }) {
-  const [data, setData]     = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editTx, setEditTx]  = useState(null);
+  const [data, setData]           = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [showAdd, setShowAdd]     = useState(false);
+  const [editTx, setEditTx]       = useState(null);
+  const [showAddIncome, setShowAddIncome] = useState(false);
+  const [editIncome, setEditIncome]       = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const load = useCallback(async () => {
@@ -837,6 +1086,11 @@ function MonthView({ year, month, darkMode, toast }) {
     load();
   };
 
+  const handleToggleReceived = async (id) => {
+    await api.toggleReceived(id);
+    load();
+  };
+
   if (loading) return (
     <div className="month-loader">
       <i className="bx bx-loader-alt bx-spin" />
@@ -846,11 +1100,11 @@ function MonthView({ year, month, darkMode, toast }) {
 
   if (!data) return null;
 
-  const { month: config, planned, realized, pending, transactions } = data;
+  const { month: config, planned, realized, pending, transactions, incomes = [], totalIncomeReceived = 0, baseIncome = 0 } = data;
   const income = config.income;
   const totalPending = (pending.essential || 0) + (pending.personal || 0) + (pending.savings || 0);
   const totalRealized = (realized.essential || 0) + (realized.personal || 0) + (realized.savings || 0);
-  const balance = income - totalRealized;
+  const balance = baseIncome - totalRealized;
 
   return (
     <div className="month-view">
@@ -859,8 +1113,13 @@ function MonthView({ year, month, darkMode, toast }) {
         <div className="summary-card summary-card--income">
           <i className="bx bx-trending-up" />
           <div>
-            <span>Renda</span>
-            <strong>{fmt(income)}</strong>
+            <span>Renda Total</span>
+            <strong>{fmt(baseIncome)}</strong>
+            {totalIncomeReceived > 0 && (
+              <span className="summary-card__sub">
+                + {fmt(totalIncomeReceived)} entradas
+              </span>
+            )}
           </div>
         </div>
         <div className="summary-card summary-card--spent">
@@ -889,9 +1148,10 @@ function MonthView({ year, month, darkMode, toast }) {
       {/* Tabs */}
       <div className="tabs">
         {[
-          { key: 'overview', icon: 'bx-bar-chart-alt-2', label: 'Visão Geral' },
-          { key: 'transactions', icon: 'bx-list-ul', label: 'Transações' },
-          { key: 'settings', icon: 'bx-cog', label: 'Configurar' },
+          { key: 'overview',      icon: 'bx-bar-chart-alt-2', label: 'Visão Geral' },
+          { key: 'incomes',       icon: 'bx-dollar-circle',   label: 'Entradas' },
+          { key: 'transactions',  icon: 'bx-list-ul',         label: 'Gastos' },
+          { key: 'settings',      icon: 'bx-cog',             label: 'Configurar' },
         ].map(t => (
           <button
             key={t.key}
@@ -943,11 +1203,31 @@ function MonthView({ year, month, darkMode, toast }) {
         </div>
       )}
 
+      {activeTab === 'incomes' && (
+        <div className="card">
+          <div className="card__header">
+            <h3 className="card__title">
+              <i className="bx bx-dollar-circle" /> Entradas do Mês
+            </h3>
+            <button className="btn btn--income btn--sm" onClick={() => setShowAddIncome(true)}>
+              <i className="bx bx-plus" /> Nova Entrada
+            </button>
+          </div>
+          <IncomeTable
+            incomes={incomes}
+            onToggleReceived={handleToggleReceived}
+            onEdit={setEditIncome}
+            onDelete={load}
+            toast={toast}
+          />
+        </div>
+      )}
+
       {activeTab === 'transactions' && (
         <div className="card">
           <div className="card__header">
             <h3 className="card__title">
-              <i className="bx bx-list-ul" /> Transações do Mês
+              <i className="bx bx-list-ul" /> Gastos do Mês
             </h3>
             <button className="btn btn--primary btn--sm" onClick={() => setShowAdd(true)}>
               <i className="bx bx-plus" /> Adicionar
@@ -990,6 +1270,18 @@ function MonthView({ year, month, darkMode, toast }) {
           <EditTransactionModal tx={editTx} onSave={load} onClose={() => setEditTx(null)} toast={toast} />
         </Modal>
       )}
+
+      {showAddIncome && (
+        <Modal title="Nova Entrada" onClose={() => setShowAddIncome(false)} size="sm">
+          <IncomeForm year={year} month={month} onSave={load} onClose={() => setShowAddIncome(false)} toast={toast} />
+        </Modal>
+      )}
+
+      {editIncome && (
+        <Modal title="Editar Entrada" onClose={() => setEditIncome(null)} size="sm">
+          <EditIncomeModal entry={editIncome} onSave={load} onClose={() => setEditIncome(null)} toast={toast} />
+        </Modal>
+      )}
     </div>
   );
 }
@@ -1002,8 +1294,8 @@ function Sidebar({ year, month, onSelect, onYearChange, darkMode, onToggleDark }
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <i className="bx bx-pie-chart-alt-2" />
-        <span>Fin503020</span>
+        <i className="bx bx-leaf" />
+        <span>FinFlow</span>
       </div>
 
       <div className="sidebar__year">
