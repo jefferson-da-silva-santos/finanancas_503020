@@ -29,7 +29,7 @@ const MONTHS_PT = [
 const CATEGORIES = {
   essential: { label: 'Essenciais',  icon: 'bx-home-alt',    color: 'var(--green-500)' },
   personal:  { label: 'Pessoais',    icon: 'bx-shopping-bag', color: 'var(--amber-500)' },
-  savings:   { label: 'Economias',   icon: 'bx-piggy-bank',   color: 'var(--orange-500)' },
+  savings:   { label: 'Economias',   icon: 'bx-coin',   color: 'var(--orange-500)' },
 };
 
 const PAYMENT_METHODS = [
