@@ -173,6 +173,50 @@ img { display: block; max-width: 100%; }
 
 .sidebar__brand i { font-size: 22px; }
 
+/* ─── Sidebar: botão de navegação superior (Metas) ─── */
+.sidebar__nav-top {
+  padding: 10px 10px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--sidebar-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.sidebar-nav-btn i {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-btn__arrow {
+  margin-left: auto;
+  font-size: 16px !important;
+  opacity: 0.7;
+}
+
+.sidebar-nav-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-active);
+}
+
+.sidebar-nav-btn--active {
+  background: var(--green-500) !important;
+  color: #fff !important;
+}
+
 .sidebar__year {
   display: flex;
   align-items: center;
@@ -386,6 +430,20 @@ img { display: block; max-width: 100%; }
 
 .icon-btn:hover { color: var(--green-500); background: var(--bg-hover); }
 .icon-btn--danger:hover { color: var(--red-500); }
+
+.icon-btn--save {
+  color: var(--green-500) !important;
+}
+
+.icon-btn--save:hover {
+  background: rgba(22, 163, 74, 0.1) !important;
+}
+
+.icon-btn--xs {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 0.85rem !important;
+}
 
 /* ─────────────────────────────────────────────
    CARDS
@@ -815,7 +873,7 @@ img { display: block; max-width: 100%; }
 .tx-empty p { font-size: 14px; }
 
 /* ─────────────────────────────────────────────
-   TABLE CHECKBOX — usado nas tabelas de gastos e entradas
+   TABLE CHECKBOX
 ───────────────────────────────────────────── */
 .table-checkbox {
   display: inline-flex;
@@ -824,7 +882,6 @@ img { display: block; max-width: 100%; }
   position: relative;
 }
 
-/* esconde o input nativo */
 .table-checkbox input[type="checkbox"] {
   position: absolute;
   opacity: 0;
@@ -833,7 +890,6 @@ img { display: block; max-width: 100%; }
   pointer-events: none;
 }
 
-/* caixa customizada */
 .table-checkbox__box {
   width: 18px;
   height: 18px;
@@ -847,7 +903,6 @@ img { display: block; max-width: 100%; }
   flex-shrink: 0;
 }
 
-/* check mark via pseudo-elemento */
 .table-checkbox__box::after {
   content: '';
   display: block;
@@ -860,13 +915,11 @@ img { display: block; max-width: 100%; }
   transition: border-color 0.12s;
 }
 
-/* hover */
 .table-checkbox:hover .table-checkbox__box {
   border-color: var(--green-500);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
 
-/* checked */
 .table-checkbox input:checked + .table-checkbox__box {
   background: var(--green-500);
   border-color: var(--green-500);
@@ -876,11 +929,8 @@ img { display: block; max-width: 100%; }
   border-color: #fff;
 }
 
-/* linha paga: o checkbox fica semi-opaco junto com o restante da linha
-   (o .tx-row--paid já aplica opacity: 0.55 em todos os td) */
-
 /* ─────────────────────────────────────────────
-   PAID TOGGLE — mantido para o UpcomingPanel
+   PAID TOGGLE
 ───────────────────────────────────────────── */
 .paid-toggle {
   background: none;
@@ -1240,20 +1290,9 @@ select { cursor: pointer; }
 
 .toast i { font-size: 18px; }
 
-.toast--success {
-  background: var(--green-500);
-  color: #fff;
-}
-
-.toast--error {
-  background: var(--red-500);
-  color: #fff;
-}
-
-.toast--info {
-  background: var(--amber-500);
-  color: #fff;
-}
+.toast--success { background: var(--green-500); color: #fff; }
+.toast--error   { background: var(--red-500);   color: #fff; }
+.toast--info    { background: var(--amber-500);  color: #fff; }
 
 @keyframes slideInRight {
   from { transform: translateX(30px); opacity: 0; }
@@ -1350,9 +1389,9 @@ select { cursor: pointer; }
   color: var(--text-primary);
 }
 
-.income-total--received i  { background: rgba(22,163,74,.12);  color: var(--green-500); }
-.income-total--pending i   { background: rgba(245,158,11,.12); color: var(--amber-500); }
-.income-total--total i     { background: rgba(99,102,241,.12); color: #6366f1; }
+.income-total--received i { background: rgba(22,163,74,.12);  color: var(--green-500); }
+.income-total--pending i  { background: rgba(245,158,11,.12); color: var(--amber-500); }
+.income-total--total i    { background: rgba(99,102,241,.12); color: #6366f1; }
 
 /* ─────────────────────────────────────────────
    INCOME BUTTON VARIANT
@@ -1372,4 +1411,406 @@ select { cursor: pointer; }
   font-size: 10px !important;
   color: var(--green-500) !important;
   font-weight: 600 !important;
+}
+
+/* ═════════════════════════════════════════════
+   METAS — GOALS VIEW
+   (novos estilos adicionados ao projeto)
+═════════════════════════════════════════════ */
+
+/* ─── GoalsView: layout principal ─── */
+.goals-view {
+  padding: 22px 28px 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.goals-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.goals-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.goals-title i { color: var(--green-500); font-size: 22px; }
+
+.goals-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.goals-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.goals-empty i {
+  font-size: 52px;
+  opacity: 0.25;
+  color: var(--green-500);
+}
+
+.goals-empty p {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.goals-empty span {
+  font-size: 13px;
+  max-width: 360px;
+  line-height: 1.6;
+}
+
+/* ─── Goals Grid ─── */
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+/* ─── GoalBlock ─── */
+.goal-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 3px solid var(--goal-color);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.goal-block:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.goal-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.goal-block__title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.goal-block__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.goal-block__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.goal-block__name-input {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--goal-color);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  outline: none;
+  width: 100%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--goal-color) 15%, transparent);
+}
+
+.goal-block__actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* ─── GoalBlock: formulário de edição inline ─── */
+.goal-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+}
+
+/* ─── Goal color picker ─── */
+.goal-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.goal-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+
+.goal-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.goal-color-swatch.active {
+  border-color: var(--text-primary);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--text-primary);
+}
+
+/* ─── Goal Donut ─── */
+.goal-donut-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+}
+
+.goal-donut-chart {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.goal-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.goal-donut-pct {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  font-family: 'DM Mono', monospace;
+}
+
+.goal-donut-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-donut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.goal-donut-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.goal-donut-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+.goal-donut-val--muted {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.goal-donut-val--target {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ─── Goal Deposits ─── */
+.goal-deposits {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-deposits__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.goal-deposits__title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.goal-add-deposit-btn {
+  background: color-mix(in srgb, var(--goal-color) 12%, transparent) !important;
+  color: var(--goal-color) !important;
+  border: 1px solid color-mix(in srgb, var(--goal-color) 40%, transparent) !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-sm) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-weight: 600 !important;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.goal-add-deposit-btn:hover {
+  opacity: 0.8;
+}
+
+.goal-deposit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+}
+
+.goal-no-deposits {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.goal-no-deposits i { font-size: 16px; }
+
+.goal-deposit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.goal-deposit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  transition: background 0.1s;
+}
+
+.goal-deposit-item:hover {
+  background: var(--bg-hover);
+}
+
+[data-theme="dark"] .goal-deposit-item {
+  background: rgba(255,255,255,0.04);
+}
+
+[data-theme="dark"] .goal-deposit-item:hover {
+  background: rgba(255,255,255,0.07);
+}
+
+.goal-deposit-date {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  flex: 1;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+}
+
+.goal-deposit-date i { color: var(--text-muted); font-size: 13px; }
+
+.goal-deposit-amount {
+  font-weight: 700;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ─── New Goal Form ─── */
+.goal-new-form {
+  /* herda .card */
+}
+
+/* ─── Responsive: goals grid ─── */
+@media (max-width: 1024px) {
+  .goals-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .goals-view {
+    padding: 16px;
+  }
+
+  .goals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-deposit-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .goal-deposit-form .btn {
+    grid-column: 1 / -1;
+  }
 }
