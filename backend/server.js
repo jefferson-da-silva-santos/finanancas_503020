@@ -499,7 +499,7 @@ app.patch('/api/incomes/:id/toggle-received', (req, res) => {
 // START SERVER
 // ─────────────────────────────────────────────
 
-const PORT = process.env.PORT || 3333;
+const PORT = 3003;
 const server = app.listen(PORT, '127.0.0.1', () => {
   console.log(`[FinFlow] Server running at http://127.0.0.1:${PORT}`);
 });

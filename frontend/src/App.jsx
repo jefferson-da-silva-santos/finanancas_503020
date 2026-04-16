@@ -18,7 +18,7 @@ ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Le
 // CONSTANTS
 // ─────────────────────────────────────────────
 
-const API = 'http://127.0.0.1:3333/api';
+const API = 'http://127.0.0.1:3003/api';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
