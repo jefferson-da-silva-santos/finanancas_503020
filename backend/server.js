@@ -5,6 +5,7 @@ const cors = require('cors');
 const Database = require('better-sqlite3');
 const path = require('path');
 const os = require('os');
+const chalk = require('chalk');
 
 // ─────────────────────────────────────────────
 // DATABASE SETUP
@@ -80,7 +81,7 @@ function getOrCreateMonth(year, month) {
 }
 
 function computeSummary(monthId, monthRow) {
-  const txs     = db.prepare('SELECT * FROM transactions WHERE month_id=?').all(monthId);
+  const txs = db.prepare('SELECT * FROM transactions WHERE month_id=?').all(monthId);
   const incomes = db.prepare('SELECT * FROM incomes WHERE month_id=? ORDER BY created_at ASC').all(monthId);
 
   // Entradas efetivamente recebidas somam à renda base
@@ -89,12 +90,12 @@ function computeSummary(monthId, monthRow) {
 
   const planned = {
     essential: (baseIncome * monthRow.pct_essential) / 100,
-    personal:  (baseIncome * monthRow.pct_personal)  / 100,
-    savings:   (baseIncome * monthRow.pct_savings)   / 100,
+    personal: (baseIncome * monthRow.pct_personal) / 100,
+    savings: (baseIncome * monthRow.pct_savings) / 100,
   };
 
   const realized = { essential: 0, personal: 0, savings: 0 };
-  const pending  = { essential: 0, personal: 0, savings: 0 };
+  const pending = { essential: 0, personal: 0, savings: 0 };
 
   for (const tx of txs) {
     if (tx.paid) {
@@ -153,7 +154,7 @@ function fail(res, msg, code = 400) {
 // GET /api/months/:year/:month
 app.get('/api/months/:year/:month', (req, res) => {
   try {
-    const year  = parseInt(req.params.year);
+    const year = parseInt(req.params.year);
     const month = parseInt(req.params.month);
     if (!year || month < 1 || month > 12) return fail(res, 'Ano ou mês inválido');
 
@@ -168,7 +169,7 @@ app.get('/api/months/:year/:month', (req, res) => {
 // PUT /api/months/:year/:month — update income and percents
 app.put('/api/months/:year/:month', (req, res) => {
   try {
-    const year  = parseInt(req.params.year);
+    const year = parseInt(req.params.year);
     const month = parseInt(req.params.month);
     const { income, pct_essential, pct_personal, pct_savings } = req.body;
 
@@ -183,10 +184,10 @@ app.put('/api/months/:year/:month', (req, res) => {
     const fields = [];
     const values = [];
 
-    if (income !== undefined)       { fields.push('income=?');       values.push(income); }
+    if (income !== undefined) { fields.push('income=?'); values.push(income); }
     if (pct_essential !== undefined) { fields.push('pct_essential=?'); values.push(pct_essential); }
-    if (pct_personal !== undefined)  { fields.push('pct_personal=?');  values.push(pct_personal); }
-    if (pct_savings !== undefined)   { fields.push('pct_savings=?');   values.push(pct_savings); }
+    if (pct_personal !== undefined) { fields.push('pct_personal=?'); values.push(pct_personal); }
+    if (pct_savings !== undefined) { fields.push('pct_savings=?'); values.push(pct_savings); }
 
     if (fields.length > 0) {
       values.push(row.id);
@@ -208,7 +209,7 @@ app.put('/api/months/:year/:month', (req, res) => {
 // GET /api/months/:year/:month/transactions
 app.get('/api/months/:year/:month/transactions', (req, res) => {
   try {
-    const year  = parseInt(req.params.year);
+    const year = parseInt(req.params.year);
     const month = parseInt(req.params.month);
     const row = getOrCreateMonth(year, month);
     const txs = db.prepare(
@@ -231,9 +232,9 @@ app.post('/api/transactions', (req, res) => {
     } = req.body;
 
     if (!description || !description.trim()) return fail(res, 'Descrição obrigatória');
-    if (!amount || amount <= 0)              return fail(res, 'Valor deve ser positivo');
-    if (!['essential','personal','savings'].includes(category)) return fail(res, 'Categoria inválida');
-    if (!year || !month)                     return fail(res, 'Ano e mês obrigatórios');
+    if (!amount || amount <= 0) return fail(res, 'Valor deve ser positivo');
+    if (!['essential', 'personal', 'savings'].includes(category)) return fail(res, 'Categoria inválida');
+    if (!year || !month) return fail(res, 'Ano e mês obrigatórios');
 
     const insertTx = db.prepare(`
       INSERT INTO transactions
@@ -294,19 +295,19 @@ app.put('/api/transactions/:id', (req, res) => {
 
     const { description, amount, payment_method, payment_type, category, due_date, paid } = req.body;
 
-    if (category && !['essential','personal','savings'].includes(category)) return fail(res, 'Categoria inválida');
+    if (category && !['essential', 'personal', 'savings'].includes(category)) return fail(res, 'Categoria inválida');
     if (amount !== undefined && amount <= 0) return fail(res, 'Valor deve ser positivo');
 
     const fields = [];
     const values = [];
 
-    if (description !== undefined) { fields.push('description=?');    values.push(description); }
-    if (amount !== undefined)      { fields.push('amount=?');         values.push(amount); }
+    if (description !== undefined) { fields.push('description=?'); values.push(description); }
+    if (amount !== undefined) { fields.push('amount=?'); values.push(amount); }
     if (payment_method !== undefined) { fields.push('payment_method=?'); values.push(payment_method); }
-    if (payment_type !== undefined)   { fields.push('payment_type=?');   values.push(payment_type); }
-    if (category !== undefined)    { fields.push('category=?');       values.push(category); }
-    if (due_date !== undefined)    { fields.push('due_date=?');       values.push(due_date); }
-    if (paid !== undefined)        { fields.push('paid=?');           values.push(paid ? 1 : 0); }
+    if (payment_type !== undefined) { fields.push('payment_type=?'); values.push(payment_type); }
+    if (category !== undefined) { fields.push('category=?'); values.push(category); }
+    if (due_date !== undefined) { fields.push('due_date=?'); values.push(due_date); }
+    if (paid !== undefined) { fields.push('paid=?'); values.push(paid ? 1 : 0); }
 
     if (fields.length === 0) return fail(res, 'Nenhum campo para atualizar');
 
@@ -410,7 +411,7 @@ app.get('/api/year/:year', (req, res) => {
 // GET /api/months/:year/:month/incomes
 app.get('/api/months/:year/:month/incomes', (req, res) => {
   try {
-    const year  = parseInt(req.params.year);
+    const year = parseInt(req.params.year);
     const month = parseInt(req.params.month);
     const row = getOrCreateMonth(year, month);
     const incomes = db.prepare(
@@ -427,8 +428,8 @@ app.post('/api/incomes', (req, res) => {
   try {
     const { year, month, description, amount, received } = req.body;
     if (!description || !description.trim()) return fail(res, 'Descrição obrigatória');
-    if (!amount || amount <= 0)              return fail(res, 'Valor deve ser positivo');
-    if (!year || !month)                     return fail(res, 'Ano e mês obrigatórios');
+    if (!amount || amount <= 0) return fail(res, 'Valor deve ser positivo');
+    if (!year || !month) return fail(res, 'Ano e mês obrigatórios');
 
     const mRow = getOrCreateMonth(year, month);
     const info = db.prepare(
@@ -454,8 +455,8 @@ app.put('/api/incomes/:id', (req, res) => {
     const values = [];
 
     if (description !== undefined) { fields.push('description=?'); values.push(description.trim()); }
-    if (amount !== undefined)      { fields.push('amount=?');      values.push(parseFloat(amount)); }
-    if (received !== undefined)    { fields.push('received=?');    values.push(received ? 1 : 0); }
+    if (amount !== undefined) { fields.push('amount=?'); values.push(parseFloat(amount)); }
+    if (received !== undefined) { fields.push('received=?'); values.push(received ? 1 : 0); }
 
     if (fields.length === 0) return fail(res, 'Nenhum campo para atualizar');
     values.push(id);
@@ -500,8 +501,32 @@ app.patch('/api/incomes/:id/toggle-received', (req, res) => {
 // ─────────────────────────────────────────────
 
 const PORT = 3003;
-const server = app.listen(PORT, '127.0.0.1', () => {
-  console.log(`[FinFlow] Server running at http://127.0.0.1:${PORT}`);
+app.listen(PORT, () => {
+  const now = new Date().toLocaleString('pt-BR');
+
+  console.log(chalk.hex('#22c55e')(`
+ ███████╗██╗███╗   ██╗███████╗██╗      ██████╗ ██╗    ██╗
+ ██╔════╝██║████╗  ██║██╔════╝██║     ██╔═══██╗██║    ██║
+ █████╗  ██║██╔██╗ ██║█████╗  ██║     ██║   ██║██║ █╗ ██║
+ ██╔══╝  ██║██║╚██╗██║██╔══╝  ██║     ██║   ██║██║███╗██║
+ ██║     ██║██║ ╚████║██║     ███████╗╚██████╔╝╚███╔███╔╝
+ ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
+`));
+
+  console.log(chalk.hex('#22c55e').bold('  ◈  FinFlow API — Finance System\n'));
+
+  console.log('  ' + chalk.green('●') + chalk.white.bold(' ONLINE') + chalk.gray(`  •  http://localhost:${PORT}`));
+  console.log('  ' + chalk.gray('SQLite  •  WAL mode  •  ') + chalk.gray(now) + '\n');
+
+  console.log(chalk.hex('#1e293b')('  ──────────────────────────────────────────'));
+
+  const route = (m, p) =>
+    console.log('  ' + chalk.hex('#22c55e')(m.padEnd(8)) + chalk.white(p));
+
+  route('GET', '/api/months/:year/:month');
+  route('GET', '/health');
+
+  console.log(chalk.hex('#1e293b')('  ──────────────────────────────────────────\n'));
 });
 
-module.exports = { app, server, db };
+module.exports = app; // Exporta o app para testes ou uso em outras partes do projeto
